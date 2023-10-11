@@ -12,6 +12,12 @@ function App() {
     const img = imgRef.current;
     console.log({ base64 });
 
+    const anchorEl = document.createElement("a");
+    anchorEl.href = base64;
+    anchorEl.download = "ic_test_img.jpeg";
+    document.body.appendChild(anchorEl);
+    anchorEl.click();
+
     if (img && blob) {
       img.src = URL.createObjectURL(blob);
     }
