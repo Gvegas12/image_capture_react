@@ -25,7 +25,6 @@ function App() {
 
   return (
     <div className="App">
-      <p>123asdasdasd</p>
       <SnapCamera
         onSnap={onSnap}
         videoRef={videoRef}
