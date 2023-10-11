@@ -40,7 +40,7 @@ const SnapCamera: FC<ISnapCameraProps> = ({
           console.log("takePhoto() error: ", error);
         });
     }
-  }, [getBase64, getBlob, imageCapture, isSnap]);
+  }, [getBase64, getBlob, getImageCapture, imageCapture, isSnap]);
 
   return <UIWebCamera getImageCapture={setImageCapture} videoRef={videoRef} />;
 };

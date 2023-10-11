@@ -2,25 +2,44 @@ import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import SnapCamera from "./SnapCamera/SnapCamera";
 
-// function contrastImage(imgData: ImageData, contrast: number) {
-//   //input range [-100..100]
-//   const d = imgData.data;
-//   contrast = contrast / 100 + 1; //convert to decimal & shift range: [0..2]
-//   const intercept = 128 * (1 - contrast);
-//   for (let i = 0; i < d.length; i += 4) {
-//     //r,g,b,a
-//     d[i] = d[i] * contrast + intercept;
-//     d[i + 1] = d[i + 1] * contrast + intercept;
-//     d[i + 2] = d[i + 2] * contrast + intercept;
-//   }
-//   return imgData;
-// }
+const contrast = (imageBitmap: ImageBitmap, canvas: HTMLCanvasElement) => {
+  console.log("Grabbed frame:", imageBitmap);
+
+  const context = canvas.getContext("2d");
+
+  if (!context) return;
+
+  canvas.width = imageBitmap.width;
+  canvas.height = imageBitmap.height;
+
+  context.drawImage(imageBitmap, 0, 0);
+
+  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+
+  const contrast = 20;
+
+  // Применяем контрастность к каждому пикселю
+  const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] = factor * (data[i] - 128) + 128;
+    data[i + 1] = factor * (data[i + 1] - 128) + 128;
+    data[i + 2] = factor * (data[i + 2] - 128) + 128;
+  }
+
+  context.putImageData(imageData, 0, 0);
+
+  const editedImageSrc = canvas.toDataURL();
+
+  return editedImageSrc;
+};
 
 function App() {
   const [isSnap, setIsSnap] = useState(false);
+  const [imageCapture, setImageCapture] = useState<ImageCapture>();
+
   const [base64, setBase64] = useState("");
   const [blob, setBlob] = useState<Blob>();
-  const [imageCapture, setImageCapture] = useState<ImageCapture>();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -32,9 +51,44 @@ function App() {
 
   useEffect(() => {
     const img = imgRef.current;
-    if (img && blob) {
-      console.log("1");
-      if (imageCapture) {
+    const canvas = canvasRef.current;
+
+    if (img && imageCapture && canvas && blob) {
+      imageCapture.grabFrame().then((imageBitmap) => {
+        const editedImageSrc = contrast(imageBitmap, canvas);
+
+        if (editedImageSrc) {
+          const link = document.createElement("a");
+          link.href = editedImageSrc;
+          link.download = "edited_image.png";
+          document.body.appendChild(link);
+          link.click();
+        }
+      });
+
+      img.src = URL.createObjectURL(blob);
+    }
+  }, [base64, blob, imageCapture]);
+
+  return (
+    <div className="App">
+      <SnapCamera
+        getImageCapture={setImageCapture}
+        isSnap={isSnap}
+        videoRef={videoRef}
+        getBase64={setBase64}
+        getBlob={setBlob}
+      />
+      <canvas ref={canvasRef} />
+      <button onClick={onSnap}>Snap</button>
+      <img ref={imgRef} />
+    </div>
+  );
+}
+
+export default App;
+
+/* if (imageCapture) {
         console.log("2");
 
         imageCapture
@@ -57,33 +111,4 @@ function App() {
           .catch(function (error) {
             console.log("grabFrame() error: ", error);
           });
-      }
-
-      const anchorEl = document.createElement("a");
-      anchorEl.href = base64;
-      anchorEl.download = "ic_test_img.jpeg";
-      document.body.appendChild(anchorEl);
-      anchorEl.click();
-
-      console.log({ base64 });
-      img.src = URL.createObjectURL(blob);
-    }
-  }, [base64, blob, imageCapture]);
-
-  return (
-    <div className="App">
-      <SnapCamera
-        getImageCapture={setImageCapture}
-        isSnap={isSnap}
-        videoRef={videoRef}
-        getBase64={setBase64}
-        getBlob={setBlob}
-      />
-      <canvas ref={canvasRef} />
-      <button onClick={onSnap}>Snap</button>
-      <img ref={imgRef} />
-    </div>
-  );
-}
-
-export default App;
+      } */
