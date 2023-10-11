@@ -6,6 +6,7 @@ interface ISnapCameraProps {
   getBlob?(blob: Blob): void;
   videoRef: RefObject<HTMLVideoElement>;
   isSnap: boolean;
+  getImageCapture(imageCapture: ImageCapture): void;
 }
 
 function blobToBase64Fn(blob: Blob): Promise<string> {
@@ -20,6 +21,7 @@ const SnapCamera: FC<ISnapCameraProps> = ({
   videoRef,
   getBlob,
   getBase64,
+  getImageCapture,
   isSnap = false,
 }) => {
   const [imageCapture, setImageCapture] = useState<ImageCapture>();
@@ -32,6 +34,7 @@ const SnapCamera: FC<ISnapCameraProps> = ({
           const base64 = await blobToBase64Fn(blob);
           getBase64?.(base64);
           getBlob?.(blob);
+          getImageCapture(imageCapture);
         })
         .catch(function (error) {
           console.log("takePhoto() error: ", error);
